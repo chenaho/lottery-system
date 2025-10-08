@@ -5,7 +5,7 @@
 
 ## 🎮 線上 Demo
 
-👉 [立即體驗]([https://willowy-speculoos-7749c0.netlify.app/](https://willowy-speculoos-7749c0.netlify.app/))
+👉 [立即體驗](https://willowy-speculoos-7749c0.netlify.app/)
 
 ## 🚀 快速開始
 
