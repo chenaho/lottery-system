@@ -5,7 +5,7 @@
 
 ## 🎮 線上 Demo
 
-👉 [立即體驗](https://YOUR_USERNAME.github.io/lottery-system/)
+👉 [立即體驗]([https://YOUR_USERNAME.github.io/lottery-system/](https://willowy-speculoos-7749c0.netlify.app/))
 
 ## 🚀 快速開始
 
