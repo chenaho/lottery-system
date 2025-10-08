@@ -5,7 +5,7 @@
 
 ## 🎮 線上 Demo
 
-👉 [立即體驗]([https://YOUR_USERNAME.github.io/lottery-system/](https://willowy-speculoos-7749c0.netlify.app/))
+👉 [立即體驗]([https://willowy-speculoos-7749c0.netlify.app/](https://willowy-speculoos-7749c0.netlify.app/))
 
 ## 🚀 快速開始
 
@@ -30,7 +30,7 @@ npm run dev
 
 ### 4. 建置生產版本 開發的抽籤系統，可從公開的 Google Sheets 讀取參與者名單進行抽籤。
 
-[![GitHub Pages](https://img.shields.io/badge/demo-online-success?style=flat-square)](https://YOUR_USERNAME.github.io/lottery-system/)
+[![GitHub Pages](https://img.shields.io/badge/demo-online-success?style=flat-square)]([[https://YOUR_USERNAME.github.io/lottery-system](https://willowy-speculoos-7749c0.netlify.app/)](https://willowy-speculoos-7749c0.netlify.app/)/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
