@@ -156,6 +156,32 @@
           </span>
         </div>
       </div>
+
+      <!-- 中獎彈窗設定 -->
+      <div class="dialog-setting-section">
+        <div class="auto-update-toggle">
+          <label class="switch">
+            <input type="checkbox" v-model="showWinnerDialog">
+            <span class="slider"></span>
+          </label>
+          <div class="auto-update-info">
+            <span class="auto-update-label">顯示中獎彈窗</span>
+            <span class="auto-update-desc">抽中時以彈出視窗顯示中獎者資訊</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中獎彈出對話框 -->
+    <div class="winner-dialog-overlay" v-if="isDialogVisible" @click="closeDialog">
+      <div class="winner-dialog" @click.stop>
+        <button class="dialog-close-btn" @click="closeDialog">✕</button>
+        <div class="dialog-content">
+          <img :src="selectedCongraImage" alt="恭喜" class="congra-image" />
+          <div class="dialog-winner-label">🎊 恭喜中獎 🎊</div>
+          <div class="dialog-winner-name">{{ lotteryStore.winner }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- 載入中提示 -->
@@ -195,10 +221,29 @@ const nextUpdateCountdown = ref(5)
 const countdownInterval = ref(null)
 const lastUpdateTime = ref('')
 
+// 中獎彈窗相關狀態
+const showWinnerDialog = ref(true) // 預設開啟中獎彈窗
+const isDialogVisible = ref(false)
+const selectedCongraImage = ref('')
+
 // 計算剩餘人數
 const remainingCount = computed(() => {
   return lotteryStore.participants.length - lotteryStore.drawnParticipants.length
 })
+
+// 隨機選擇慶祝圖片
+const getRandomCongraImage = () => {
+  const images = [
+    '/congra_259x218_01.png',
+    '/congra_259x218_02.png'
+  ]
+  return images[Math.floor(Math.random() * images.length)]
+}
+
+// 關閉對話框
+const closeDialog = () => {
+  isDialogVisible.value = false
+}
 
 // 獲取 Google Sheets 標題
 const fetchSheetTitle = async () => {
@@ -269,6 +314,15 @@ const startDraw = async () => {
   
   isDrawing.value = false
   showWinner.value = true
+  
+  // 如果啟用彈窗，則顯示中獎對話框
+  if (showWinnerDialog.value && lotteryStore.winner) {
+    selectedCongraImage.value = getRandomCongraImage()
+    // 稍微延遲顯示彈窗，讓主畫面的動畫先完成
+    setTimeout(() => {
+      isDialogVisible.value = true
+    }, 300)
+  }
 }
 
 // 切換參與者名單顯示
@@ -744,6 +798,15 @@ onUnmounted(() => {
   border: 2px solid #b39ddb;
 }
 
+/* 中獎彈窗設定區塊 */
+.dialog-setting-section {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff3e0, #fce4ec);
+  border-radius: 12px;
+  border: 2px solid #f48fb1;
+}
+
 .auto-update-toggle {
   display: flex;
   align-items: center;
@@ -946,6 +1009,135 @@ input:checked + .slider:before {
   to { transform: rotate(360deg); }
 }
 
+/* 中獎彈出對話框 */
+.winner-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.winner-dialog {
+  background: white;
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: scaleIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dialog-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  color: #666;
+}
+
+.dialog-close-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: rotate(90deg);
+  color: #333;
+}
+
+.dialog-content {
+  text-align: center;
+}
+
+.congra-image {
+  width: 259px;
+  height: 218px;
+  margin: 0 auto 1.5rem;
+  display: block;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.dialog-winner-label {
+  font-size: 1.75rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  animation: fadeInUp 0.5s ease-out 0.2s both;
+}
+
+.dialog-winner-name {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.5s ease-out 0.4s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
   .lottery-container {
@@ -1003,6 +1195,23 @@ input:checked + .slider:before {
 
   .input-row {
     flex-direction: column;
+  }
+
+  .winner-dialog {
+    padding: 2rem 1.5rem;
+  }
+
+  .congra-image {
+    width: 200px;
+    height: 168px;
+  }
+
+  .dialog-winner-label {
+    font-size: 1.5rem;
+  }
+
+  .dialog-winner-name {
+    font-size: 2rem;
   }
 }
 </style>
