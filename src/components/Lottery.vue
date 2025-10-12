@@ -12,7 +12,14 @@
           type="text" 
           placeholder="貼上你的 Google Sheets 公開連結"
           class="input-field"
+          @blur="fetchSheetTitle"
         />
+        <!-- 顯示工作表標題 -->
+        <div v-if="sheetTitle" class="sheet-title-display">
+          <span class="sheet-icon">📊</span>
+          <span class="sheet-title-text">{{ sheetTitle }}</span>
+          <span v-if="isFetchingTitle" class="fetching-indicator">載入中...</span>
+        </div>
       </div>
       <div class="input-row">
         <div class="input-group small">
@@ -162,15 +169,19 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLotteryStore } from '../stores/lottery'
-import { getColumnData } from '../services/googleSheets'
+import { getColumnData, getSheetTitle } from '../services/googleSheets'
 
 const lotteryStore = useLotteryStore()
 
 // 設定狀態
 const sheetUrl = ref('https://docs.google.com/spreadsheets/d/1FLiP_HsO-yOqo9GSHL8OCT37gGCCpU-uxucQYWFsEZM/edit?usp=sharing')
-const columnLetter = ref('C')
+const columnLetter = ref('B')
 const startRow = ref(1)
 const isConfigured = ref(false)
+
+// Google Sheets 標題相關
+const sheetTitle = ref('')
+const isFetchingTitle = ref(false)
 
 // 抽籤動畫狀態
 const isDrawing = ref(false)
@@ -178,7 +189,7 @@ const showWinner = ref(false)
 const showParticipantsList = ref(true) // 預設展開參與者名單
 
 // 自動更新相關狀態
-const autoUpdateEnabled = ref(false)
+const autoUpdateEnabled = ref(true) // 預設開啟自動更新
 const autoUpdateInterval = ref(null)
 const nextUpdateCountdown = ref(5)
 const countdownInterval = ref(null)
@@ -188,6 +199,30 @@ const lastUpdateTime = ref('')
 const remainingCount = computed(() => {
   return lotteryStore.participants.length - lotteryStore.drawnParticipants.length
 })
+
+// 獲取 Google Sheets 標題
+const fetchSheetTitle = async () => {
+  if (!sheetUrl.value || sheetUrl.value.trim() === '') {
+    sheetTitle.value = ''
+    return
+  }
+
+  try {
+    isFetchingTitle.value = true
+    const result = await getSheetTitle(sheetUrl.value)
+    
+    if (result.error) {
+      sheetTitle.value = '⚠️ ' + result.title
+    } else {
+      sheetTitle.value = result.title
+    }
+  } catch (error) {
+    sheetTitle.value = '⚠️ 無法取得標題'
+    console.error('獲取標題失敗:', error)
+  } finally {
+    isFetchingTitle.value = false
+  }
+}
 
 // 載入參與者名單
 const loadParticipants = async () => {
@@ -207,6 +242,11 @@ const loadParticipants = async () => {
     
     lotteryStore.setParticipants(names)
     isConfigured.value = true
+    
+    // 如果自動更新已啟用，開始自動更新
+    if (autoUpdateEnabled.value) {
+      startAutoUpdate()
+    }
   } catch (error) {
     lotteryStore.error = error.message
     alert('載入失敗: ' + error.message)
@@ -343,6 +383,8 @@ const stopAutoUpdate = () => {
 // 自動載入（如果已經有預設網址）
 onMounted(() => {
   if (sheetUrl.value) {
+    // 自動獲取標題
+    fetchSheetTitle()
     // 可以選擇自動載入或讓使用者手動載入
     // loadParticipants()
   }
@@ -405,6 +447,47 @@ onUnmounted(() => {
 .input-field:focus {
   outline: none;
   border-color: #667eea;
+}
+
+/* Google Sheets 標題顯示 */
+.sheet-title-display {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 2px solid #b39ddb;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sheet-icon {
+  font-size: 1.25rem;
+}
+
+.sheet-title-text {
+  flex: 1;
+  font-weight: 600;
+  color: #5e35b1;
+  font-size: 0.95rem;
+}
+
+.fetching-indicator {
+  font-size: 0.75rem;
+  color: #9575cd;
+  font-style: italic;
 }
 
 .input-row {
