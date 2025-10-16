@@ -66,6 +66,15 @@
         </div>
       </div>
 
+      <!-- 提示訊息 -->
+      <div class="info-message" v-if="lotteryStore.participants.length === 0">
+        <div class="info-icon">ℹ️</div>
+        <div class="info-text">
+          <strong>等待參與者資料中...</strong>
+          <p>已連接到 Google Sheets，系統將每 5 秒自動檢查更新。<br>請確保參與者已開始填寫資料。</p>
+        </div>
+      </div>
+
       <!-- 參與者名單顯示 -->
       <div class="participants-list">
         <div class="list-header">
@@ -100,9 +109,10 @@
       <button 
         @click="startDraw" 
         class="btn btn-draw" 
-        :disabled="remainingCount === 0"
+        :disabled="remainingCount === 0 || lotteryStore.participants.length === 0"
       >
         <span v-if="isDrawing">抽籤中...</span>
+        <span v-else-if="lotteryStore.participants.length === 0">等待參與者資料...</span>
         <span v-else>{{ remainingCount > 0 ? '開始抽籤' : '已全部抽完' }}</span>
       </button>
 
@@ -200,9 +210,11 @@ import { getColumnData, getSheetTitle } from '../services/googleSheets'
 const lotteryStore = useLotteryStore()
 
 // 設定狀態
-const sheetUrl = ref('https://docs.google.com/spreadsheets/d/1FLiP_HsO-yOqo9GSHL8OCT37gGCCpU-uxucQYWFsEZM/edit?usp=sharing')
+// https://docs.google.com/spreadsheets/d/1FLiP_HsO-yOqo9GSHL8OCT37gGCCpU-uxucQYWFsEZM/edit?usp=sharing
+
+const sheetUrl = ref('https://docs.google.com/spreadsheets/d/1D8XttbxGnUL5FbIdEoyGLHF_hDA_GbvLRuneQ-UvwPA/edit?usp=sharing')
 const columnLetter = ref('B')
-const startRow = ref(1)
+const startRow = ref(2)
 const isConfigured = ref(false)
 
 // Google Sheets 標題相關
@@ -275,17 +287,33 @@ const loadParticipants = async () => {
     lotteryStore.isLoading = true
     lotteryStore.error = null
     
+    // 先驗證 Google Sheets 是否有效（透過檢查是否能取得標題）
+    if (!sheetTitle.value || sheetTitle.value.startsWith('⚠️')) {
+      await fetchSheetTitle()
+      
+      // 如果仍然無法取得有效標題，表示網址無效
+      if (!sheetTitle.value || sheetTitle.value.startsWith('⚠️')) {
+        throw new Error('無法連接到 Google Sheets，請檢查網址是否正確且已設為公開')
+      }
+    }
+    
+    // 嘗試讀取參與者資料
     const names = await getColumnData(
       sheetUrl.value,
       columnLetter.value,
       startRow.value
     )
     
-    if (names.length === 0) {
-      throw new Error('未找到任何參與者資料，請檢查欄位設定')
+    // 如果有資料就設定，沒有資料也沒關係（用戶會陸續填寫）
+    if (names.length > 0) {
+      lotteryStore.setParticipants(names)
+      console.log(`✅ 已載入 ${names.length} 位參與者`)
+    } else {
+      lotteryStore.setParticipants([])
+      console.log('ℹ️ 目前尚無參與者資料，等待用戶填寫中...')
     }
     
-    lotteryStore.setParticipants(names)
+    // Google Sheets 有效，進入抽籤介面
     isConfigured.value = true
     
     // 如果自動更新已啟用，開始自動更新
@@ -922,6 +950,42 @@ input:checked + .slider:before {
   border-radius: 8px;
   margin: 1rem 0;
   text-align: center;
+}
+
+/* 提示訊息 */
+.info-message {
+  background: linear-gradient(135deg, #e3f2fd, #e1f5fe);
+  border: 2px solid #81d4fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.info-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.info-text {
+  flex: 1;
+}
+
+.info-text strong {
+  display: block;
+  font-size: 1.125rem;
+  color: #0277bd;
+  margin-bottom: 0.5rem;
+}
+
+.info-text p {
+  margin: 0;
+  color: #0288d1;
+  font-size: 0.875rem;
+  line-height: 1.6;
 }
 
 /* 已抽出名單 */
