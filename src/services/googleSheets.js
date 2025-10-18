@@ -46,6 +46,12 @@ const parseGoogleSheetsResponse = (responseText) => {
 // 從特定欄位提取資料
 export const getColumnData = async (spreadsheetUrl, columnLetter = 'C', startRow = 2) => {
   try {
+    // 驗證起始列至少為 2（因為第 1 列是表頭）
+    const validStartRow = Math.max(2, startRow)
+    if (startRow < 2) {
+      console.warn(`起始列設定為 ${startRow}，已自動調整為 2（第 1 列為表頭）`)
+    }
+    
     const spreadsheetId = extractSpreadsheetId(spreadsheetUrl)
     const gid = extractGid(spreadsheetUrl)
     
@@ -75,19 +81,36 @@ export const getColumnData = async (spreadsheetUrl, columnLetter = 'C', startRow
     const rows = data.table.rows
     const columnData = []
     
-    // 從指定的起始列開始讀取
-    for (let i = startRow - 1; i < rows.length; i++) {
+    console.log(`📊 Google Sheets 讀取資訊:`)
+    console.log(`   - 總列數: ${rows.length}`)
+    console.log(`   - 欄位: ${columnLetter} (索引: ${columnIndex})`)
+    console.log(`   - 起始列設定: ${startRow}`)
+    console.log(`   - 驗證後起始列: ${validStartRow}`)
+    console.log(`   - 陣列起始索引: ${validStartRow - 1}`)
+    console.log(`   - 實際讀取範圍: 第 ${validStartRow} 列到第 ${rows.length} 列`)
+    
+    // 從指定的起始列開始讀取（使用驗證後的起始列）
+    for (let i = validStartRow - 1; i < rows.length; i++) {
       const row = rows[i]
+      console.log(`   [列 ${i + 1}] 檢查中...`, row.c ? `有資料` : `無資料`)
+      
       if (row.c && row.c[columnIndex] && row.c[columnIndex].v) {
         const value = row.c[columnIndex].v
+        console.log(`   [列 ${i + 1}] 欄位 ${columnLetter} 的值: "${value}"`)
         // 只加入非空白的值
         if (value && value.toString().trim() !== '') {
           columnData.push(value.toString().trim())
+          console.log(`   ✅ [列 ${i + 1}] 已加入: "${value.toString().trim()}"`)
+        } else {
+          console.log(`   ⚠️ [列 ${i + 1}] 值為空，跳過`)
         }
+      } else {
+        console.log(`   ⚠️ [列 ${i + 1}] 欄位 ${columnLetter} 無資料`)
       }
     }
     
-    console.log('提取的欄位資料:', columnData)
+    console.log('✅ 最終提取的欄位資料:', columnData)
+    console.log(`✅ 共提取 ${columnData.length} 筆資料`)
     return columnData
   } catch (error) {
     console.error('讀取 Google Sheets 資料時發生錯誤:', error)

@@ -37,10 +37,11 @@
           <input 
             v-model.number="startRow" 
             type="number" 
-            placeholder="1"
-            min="1"
+            placeholder="2"
+            min="2"
             class="input-field"
           />
+          <span class="hint-small">第1列為表頭，從第2列開始</span>
         </div>
       </div>
       <button @click="loadParticipants" class="btn btn-primary" :disabled="!sheetUrl">
@@ -586,6 +587,14 @@ onUnmounted(() => {
   font-size: 0.875rem;
   color: #666;
   text-align: center;
+}
+
+.hint-small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #999;
+  font-style: italic;
 }
 
 /* 統計資訊 */
